@@ -20,17 +20,9 @@ async function bootstrap() {
   app.use(helmet());
   app.use(cookieParser());
 
-  // Serve static files from Next.js build
-  const isProduction = process.env.NODE_ENV === 'production';
-  if (isProduction) {
-    // Serve static files from Next.js build
-    app.useStaticAssets(join(__dirname, '..', '..', '..', 'client', '.next', 'static'), {
-      prefix: '/_next/static',
-    });
-    app.useStaticAssets(join(__dirname, '..', '..', '..', 'client', 'public'), {
-      prefix: '/',
-    });
-  }
+  // Note: In production, Next.js will run as a separate process
+  // The frontend will be served by Next.js server on port 3001
+  // NestJS serves the API on port 3000
 
   // CORS configuration
   app.enableCors({
@@ -97,23 +89,15 @@ async function bootstrap() {
     },
   });
 
-  // Handle client-side routing (SPA fallback)
-  if (isProduction) {
-    app.use('*', (req, res) => {
-      // For Next.js, we need to serve the appropriate HTML file
-      // This is a simplified approach - in production you might want to use Next.js server
-      res.sendFile(join(__dirname, '..', '..', '..', 'client', 'public', 'index.html'));
-    });
-  }
+  // Note: Frontend is served by Next.js on port 3001
+  // This server only handles API requests
 
   const port = configService.get('PORT', 3000);
   await app.listen(port);
 
   console.log(`🚀 Application is running on: http://localhost:${port}`);
   console.log(`📚 Swagger documentation: http://localhost:${port}/${apiPrefix}/docs`);
-  if (isProduction) {
-    console.log(`🌐 Frontend served at: http://localhost:${port}`);
-  }
+  console.log(`🌐 Frontend will be served separately on port 3001`);
 }
 
 bootstrap();

@@ -1,8 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Disable static export for dynamic e-commerce app
-  // Static export doesn't work well with client components and dynamic routes
-  // output: process.env.NODE_ENV === 'production' ? 'export' : undefined,
+  // Enable standalone output for Docker
+  output: 'standalone',
   trailingSlash: true,
   images: {
     domains: ['localhost', 'example.com', 'res.cloudinary.com'],
