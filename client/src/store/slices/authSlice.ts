@@ -84,7 +84,7 @@ export const restoreAuthState = createAsyncThunk<
 });
 
 export const fetchUserProfile = createAsyncThunk<
-  User & { profile?: any; addresses?: any[] },
+  User,
   void,
   { rejectValue: ApiError }
 >('auth/fetchUserProfile', async (_, { rejectWithValue }) => {
@@ -97,7 +97,7 @@ export const fetchUserProfile = createAsyncThunk<
 });
 
 export const updateProfile = createAsyncThunk<
-  User & { profile?: any; addresses?: any[] },
+  User,
   any,
   { rejectValue: ApiError }
 >('auth/updateProfile', async (data, { rejectWithValue }) => {

@@ -33,7 +33,7 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 type ProfileDetailsFormData = z.infer<typeof profileDetailsSchema>;
 
 interface ProfileFormProps {
-  user: User & { profile?: any; addresses?: any[] };
+  user: User;
 }
 
 export function ProfileForm({ user }: ProfileFormProps) {

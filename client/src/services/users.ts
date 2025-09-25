@@ -3,14 +3,14 @@ import { User, UserProfile, Address, UpdateUserRequest, UpdateUserProfileRequest
 
 export const usersService = {
   // Get user profile
-  async getProfile(): Promise<User & { profile?: UserProfile; addresses?: Address[] }> {
-    const response = await apiService.get<User & { profile?: UserProfile; addresses?: Address[] }>('/users/profile');
+  async getProfile(): Promise<User> {
+    const response = await apiService.get<User>('/users/profile');
     return response.data;
   },
 
   // Update user profile
-  async updateProfile(data: UpdateUserRequest): Promise<User & { profile?: UserProfile; addresses?: Address[] }> {
-    const response = await apiService.put<User & { profile?: UserProfile; addresses?: Address[] }>('/users/profile', data);
+  async updateProfile(data: UpdateUserRequest): Promise<User> {
+    const response = await apiService.put<User>('/users/profile', data);
     return response.data;
   },
 
@@ -62,8 +62,8 @@ export const usersService = {
   },
 
   // Update user role (Admin only)
-  async updateUserRole(userId: string, role: string): Promise<User & { profile?: UserProfile; addresses?: Address[] }> {
-    const response = await apiService.put<User & { profile?: UserProfile; addresses?: Address[] }>(`/users/${userId}/role`, { role });
+  async updateUserRole(userId: string, role: string): Promise<User> {
+    const response = await apiService.put<User>(`/users/${userId}/role`, { role });
     return response.data;
   },
 

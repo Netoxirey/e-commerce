@@ -8,6 +8,8 @@ export interface User {
   role: 'ADMIN' | 'CUSTOMER' | 'SELLER';
   isActive: boolean;
   createdAt: string;
+  profile?: UserProfile;
+  addresses?: Address[];
 }
 
 export interface UserProfile {
