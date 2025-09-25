@@ -61,9 +61,6 @@ COPY --from=backend-builder --chown=nestjs:nodejs /app/server/package*.json ./se
 # Copy Prisma schema and migrations first
 COPY --chown=nestjs:nodejs server/prisma ./server/prisma
 
-# Verify Prisma schema is copied correctly
-RUN echo "Verifying Prisma schema copy..." && ls -la prisma/ && cat prisma/schema.prisma | head -10
-
 # Install only production dependencies
 WORKDIR /app/server
 RUN npm ci --only=production
@@ -78,15 +75,6 @@ COPY --from=frontend-builder --chown=nestjs:nodejs /app/client/.next ./client/.n
 COPY --from=frontend-builder --chown=nestjs:nodejs /app/client/public ./client/public
 COPY --from=frontend-builder --chown=nestjs:nodejs /app/client/package*.json ./client/
 COPY --from=frontend-builder --chown=nestjs:nodejs /app/client/next.config.js ./client/
-
-# Install frontend dependencies
-WORKDIR /app/client
-RUN npm ci --only=production
-
-# Copy startup script
-WORKDIR /app
-COPY --chown=nestjs:nodejs start.sh ./
-RUN chmod +x start.sh
 
 # Set environment
 ENV NODE_ENV=production
@@ -105,4 +93,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # Start application
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["./start.sh"]
+CMD ["node", "server/dist/main.js"]
