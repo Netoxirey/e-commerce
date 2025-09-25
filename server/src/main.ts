@@ -25,13 +25,12 @@ async function bootstrap() {
   // NestJS serves the API on port 3000
 
   // CORS configuration
+  const corsOrigin = configService.get<string>('CORS_ORIGIN');
+
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'https://*.vercel.app', // Allow all Vercel preview deployments
-      configService.get('CORS_ORIGIN', 'https://your-vercel-app.vercel.app')
-    ].filter(Boolean),
+    origin: corsOrigin
+    ? corsOrigin.split(',').map(o => o.trim())
+    : ['http://localhost:3000', 'http://localhost:3001'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
