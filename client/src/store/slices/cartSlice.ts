@@ -75,6 +75,10 @@ export const addToCart = createAsyncThunk<
       return rejectWithValue({
         message: 'Authentication required',
         statusCode: 401,
+        error: 'Unauthorized',
+        timestamp: new Date().toISOString(),
+        path: '/cart',
+        method: 'POST',
         isAuthRequired: true
       });
     }
@@ -99,6 +103,10 @@ export const updateCartItem = createAsyncThunk<
       return rejectWithValue({
         message: 'Authentication required',
         statusCode: 401,
+        error: 'Unauthorized',
+        timestamp: new Date().toISOString(),
+        path: '/cart',
+        method: 'PUT',
         isAuthRequired: true
       });
     }
@@ -123,6 +131,10 @@ export const removeFromCart = createAsyncThunk<
       return rejectWithValue({
         message: 'Authentication required',
         statusCode: 401,
+        error: 'Unauthorized',
+        timestamp: new Date().toISOString(),
+        path: '/cart',
+        method: 'DELETE',
         isAuthRequired: true
       });
     }
@@ -147,6 +159,10 @@ export const clearCart = createAsyncThunk<
       return rejectWithValue({
         message: 'Authentication required',
         statusCode: 401,
+        error: 'Unauthorized',
+        timestamp: new Date().toISOString(),
+        path: '/cart',
+        method: 'DELETE',
         isAuthRequired: true
       });
     }

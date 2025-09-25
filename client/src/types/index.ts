@@ -305,4 +305,5 @@ export interface ApiError {
   timestamp: string;
   path: string;
   method: string;
+  isAuthRequired?: boolean;
 }
