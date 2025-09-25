@@ -15,7 +15,7 @@ import { formatPrice, calculateDiscount } from '@/lib/utils';
 import { ShoppingCart, Heart, Star, Truck, Shield, RotateCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function ProductDetailPage() {
+export default function ProductDetailClient() {
   const params = useParams();
   const slug = params.slug as string;
   const dispatch = useAppDispatch();
