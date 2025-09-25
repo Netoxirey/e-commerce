@@ -1,10 +1,10 @@
 version: '3.8'
 
 services:
-  # Backend API
+  # Backend API only
   backend:
     build:
-      context: .
+      context: ./server
       dockerfile: Dockerfile
     container_name: ecommerce-backend
     ports:
@@ -18,9 +18,9 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
       JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3001}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://your-vercel-app.vercel.app}
       API_PREFIX: ${API_PREFIX:-api/v1}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3001}
+      FRONTEND_URL: ${FRONTEND_URL:-https://your-vercel-app.vercel.app}
       # Optional services
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT}
@@ -42,30 +42,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    networks:
-      - ecommerce-network
-
-  # Frontend Next.js
-  frontend:
-    build:
-      context: ./client
-      dockerfile: Dockerfile
-    container_name: ecommerce-frontend
-    ports:
-      - "${FRONTEND_PORT:-3001}:3001"
-    environment:
-      NODE_ENV: ${NODE_ENV:-production}
-      PORT: 3001
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000/api/v1}
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    depends_on:
-      - backend
     networks:
       - ecommerce-network
 

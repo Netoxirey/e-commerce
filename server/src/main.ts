@@ -29,7 +29,8 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000',
       'http://localhost:3001',
-      configService.get('CORS_ORIGIN', 'http://localhost:3000')
+      'https://*.vercel.app', // Allow all Vercel preview deployments
+      configService.get('CORS_ORIGIN', 'https://your-vercel-app.vercel.app')
     ].filter(Boolean),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
