@@ -7,14 +7,17 @@ WORKDIR /app/client
 # Copy package files
 COPY client/package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (including dev dependencies for build)
+RUN npm ci
 
 # Copy source code
 COPY client/ ./
 
+# Set environment for production build
+ENV NODE_ENV=production
+
 # Build static export
-RUN npm run build
+RUN echo "Building frontend..." && npm run build && echo "Frontend build completed successfully"
 
 # Stage 2: Build Backend
 FROM node:18-alpine AS backend-builder
@@ -24,14 +27,20 @@ WORKDIR /app/server
 # Copy package files
 COPY server/package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (including dev dependencies for build)
+RUN npm ci
 
 # Copy source code
 COPY server/ ./
 
+# Set environment for production build
+ENV NODE_ENV=production
+
+# Generate Prisma client
+RUN npx prisma generate
+
 # Build backend
-RUN npm run build
+RUN echo "Building backend..." && npm run build && echo "Backend build completed successfully"
 
 # Stage 3: Production
 FROM node:18-alpine AS production
@@ -47,8 +56,16 @@ RUN adduser -S nestjs -u 1001
 
 # Copy built backend
 COPY --from=backend-builder --chown=nestjs:nodejs /app/server/dist ./server/dist
-COPY --from=backend-builder --chown=nestjs:nodejs /app/server/node_modules ./server/node_modules
 COPY --from=backend-builder --chown=nestjs:nodejs /app/server/package*.json ./server/
+
+# Install only production dependencies
+WORKDIR /app/server
+RUN npm ci --only=production
+
+# Generate Prisma client for production
+RUN npx prisma generate
+
+WORKDIR /app
 
 # Copy built frontend
 COPY --from=frontend-builder --chown=nestjs:nodejs /app/client/out ./client/out
