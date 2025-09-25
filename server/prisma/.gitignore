@@ -1,0 +1,42 @@
+# Prisma gitignore
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+dev.db*
+test.db*
+
+# Migration files (keep the structure but ignore dev databases)
+# Keep: migrations/
+# Ignore: dev.db files
+
+# Generated Prisma client (if generated locally)
+# Note: Usually this is in node_modules, but if generated elsewhere
+prisma-client/
+
+# Local development databases
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Backup files
+*.backup
+*.bak
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
