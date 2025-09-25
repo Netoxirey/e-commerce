@@ -1,38 +1,6 @@
 version: '3.8'
 
 services:
-  # Database
-  postgres:
-    image: postgres:15-alpine
-    container_name: ecommerce-postgres-dev
-    environment:
-      POSTGRES_DB: ecommerce_dev
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_dev_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Redis
-  redis:
-    image: redis:7-alpine
-    container_name: ecommerce-redis-dev
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_dev_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # Backend (Development)
   backend:
     build:
@@ -40,25 +8,22 @@ services:
       dockerfile: Dockerfile.dev
     container_name: ecommerce-backend-dev
     ports:
-      - "3000:3000"
+      - "${BACKEND_PORT:-3000}:3000"
     environment:
       NODE_ENV: development
       PORT: 3000
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ecommerce_dev
-      REDIS_URL: redis://redis:6379
-      JWT_SECRET: dev-jwt-secret
-      JWT_REFRESH_SECRET: dev-refresh-secret
-      CORS_ORIGIN: http://localhost:3001
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-refresh-secret}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3001}
     volumes:
       - ./server:/app
       - /app/node_modules
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     command: npm run start:dev
     restart: unless-stopped
+    networks:
+      - ecommerce-dev-network
 
   # Frontend (Development)
   frontend:
@@ -67,17 +32,19 @@ services:
       dockerfile: Dockerfile.dev
     container_name: ecommerce-frontend-dev
     ports:
-      - "3001:3001"
+      - "${FRONTEND_PORT:-3001}:3001"
     environment:
       NODE_ENV: development
-      NEXT_PUBLIC_API_URL: http://localhost:3000/api/v1
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000/api/v1}
     volumes:
       - ./client:/app
       - /app/node_modules
       - /app/.next
     command: npm run dev
     restart: unless-stopped
+    networks:
+      - ecommerce-dev-network
 
-volumes:
-  postgres_dev_data:
-  redis_dev_data:
+networks:
+  ecommerce-dev-network:
+    driver: bridge
