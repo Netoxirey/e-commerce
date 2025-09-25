@@ -58,20 +58,23 @@ RUN adduser -S nestjs -u 1001
 COPY --from=backend-builder --chown=nestjs:nodejs /app/server/dist ./server/dist
 COPY --from=backend-builder --chown=nestjs:nodejs /app/server/package*.json ./server/
 
+# Copy Prisma schema and migrations first
+COPY --chown=nestjs:nodejs server/prisma ./server/prisma
+
+# Verify Prisma schema is copied correctly
+RUN echo "Verifying Prisma schema copy..." && ls -la prisma/ && cat prisma/schema.prisma | head -10
+
 # Install only production dependencies
 WORKDIR /app/server
 RUN npm ci --only=production
 
 # Generate Prisma client for production
-RUN npx prisma generate
+RUN echo "Checking Prisma schema location..." && ls -la prisma/ && npx prisma generate
 
 WORKDIR /app
 
 # Copy built frontend
 COPY --from=frontend-builder --chown=nestjs:nodejs /app/client/out ./client/out
-
-# Copy Prisma schema and migrations
-COPY --chown=nestjs:nodejs server/prisma ./server/prisma
 
 # Set environment
 ENV NODE_ENV=production
