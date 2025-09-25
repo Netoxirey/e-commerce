@@ -72,7 +72,6 @@ WORKDIR /app
 
 # Copy built frontend (Next.js build output)
 COPY --from=frontend-builder --chown=nestjs:nodejs /app/client/.next ./client/.next
-COPY --from=frontend-builder --chown=nestjs:nodejs /app/client/public ./client/public
 COPY --from=frontend-builder --chown=nestjs:nodejs /app/client/package*.json ./client/
 COPY --from=frontend-builder --chown=nestjs:nodejs /app/client/next.config.js ./client/
 
