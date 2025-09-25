@@ -73,12 +73,25 @@ RUN echo "Checking Prisma schema location..." && ls -la prisma/ && npx prisma ge
 
 WORKDIR /app
 
-# Copy built frontend
-COPY --from=frontend-builder --chown=nestjs:nodejs /app/client/out ./client/out
+# Copy built frontend (Next.js build output)
+COPY --from=frontend-builder --chown=nestjs:nodejs /app/client/.next ./client/.next
+COPY --from=frontend-builder --chown=nestjs:nodejs /app/client/public ./client/public
+COPY --from=frontend-builder --chown=nestjs:nodejs /app/client/package*.json ./client/
+COPY --from=frontend-builder --chown=nestjs:nodejs /app/client/next.config.js ./client/
+
+# Install frontend dependencies
+WORKDIR /app/client
+RUN npm ci --only=production
+
+# Copy startup script
+WORKDIR /app
+COPY --chown=nestjs:nodejs start.sh ./
+RUN chmod +x start.sh
 
 # Set environment
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
 
 # Switch to non-root user
 USER nestjs
@@ -92,4 +105,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # Start application
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "server/dist/main.js"]
+CMD ["./start.sh"]

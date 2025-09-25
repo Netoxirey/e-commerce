@@ -20,20 +20,9 @@ async function bootstrap() {
   app.use(helmet());
   app.use(cookieParser());
 
-  // Serve static files from Next.js build
-  const isProduction = process.env.NODE_ENV === 'production';
-  if (isProduction) {
-    // Serve static files from Next.js export
-    app.useStaticAssets(join(__dirname, '..', '..', '..', 'client', 'out'), {
-      prefix: '/',
-      index: ['index.html'],
-    });
-    
-    // Serve static assets (CSS, JS, images)
-    app.useStaticAssets(join(__dirname, '..', '..', '..', 'client', 'out', '_next', 'static'), {
-      prefix: '/_next/static',
-    });
-  }
+  // Note: In production, Next.js will run as a separate process
+  // The frontend will be served by Next.js server, not by NestJS
+  // This allows for proper SSR and dynamic routing
 
   // CORS configuration
   app.enableCors({
