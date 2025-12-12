@@ -3,10 +3,16 @@ import { ApiResponse, ApiError } from '@/types';
 
 class ApiService {
   private api: AxiosInstance;
+  private isRefreshing = false;
+  private failedQueue: Array<{
+    resolve: (value: unknown) => void;
+    reject: (reason?: unknown) => void;
+  }> = [];
 
   constructor() {
     this.api = axios.create({
-      baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1',
+      baseURL:
+        process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1',
       timeout: 10000,
       withCredentials: true, // Enable cookies
       headers: {
@@ -15,6 +21,17 @@ class ApiService {
     });
 
     this.setupInterceptors();
+  }
+
+  private processQueue(error: unknown, token: string | null = null) {
+    this.failedQueue.forEach((promise) => {
+      if (error) {
+        promise.reject(error);
+      } else {
+        promise.resolve(token);
+      }
+    });
+    this.failedQueue = [];
   }
 
   private setupInterceptors() {
@@ -40,24 +57,55 @@ class ApiService {
       async (error) => {
         const originalRequest = error.config;
 
-        // Handle 401 errors (token expired)
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Skip refresh logic for auth endpoints to prevent infinite loop
+        const isAuthEndpoint =
+          originalRequest?.url?.includes('/auth/refresh') ||
+          originalRequest?.url?.includes('/auth/logout');
+
+        // Handle 401 errors (token expired) - but not for auth endpoints
+        if (
+          error.response?.status === 401 &&
+          !originalRequest._retry &&
+          !isAuthEndpoint
+        ) {
+          if (this.isRefreshing) {
+            // If already refreshing, queue this request
+            return new Promise((resolve, reject) => {
+              this.failedQueue.push({ resolve, reject });
+            })
+              .then((token) => {
+                originalRequest.headers.Authorization = `Bearer ${token}`;
+                return this.api(originalRequest);
+              })
+              .catch((err) => {
+                return Promise.reject(err);
+              });
+          }
+
           originalRequest._retry = true;
+          this.isRefreshing = true;
 
           try {
             // Try to refresh token using cookie
             const response = await this.refreshAccessToken();
             const newAccessToken = response.data.accessToken;
             this.setAccessToken(newAccessToken);
-            
+
+            // Process queued requests with new token
+            this.processQueue(null, newAccessToken);
+
             // Retry the original request with new token
             originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
             return this.api(originalRequest);
           } catch (refreshError) {
-            // Refresh failed, redirect to login
+            // Refresh failed, reject all queued requests
+            this.processQueue(refreshError, null);
+
+            // Clear auth - callers should handle redirect/navigation
             this.clearAuth();
-            window.location.href = '/auth/login';
             return Promise.reject(refreshError);
+          } finally {
+            this.isRefreshing = false;
           }
         }
 
@@ -66,7 +114,8 @@ class ApiService {
           statusCode: error.response?.status || 500,
           message: error.response?.data?.message || 'An error occurred',
           error: error.response?.data?.error || 'Internal Server Error',
-          timestamp: error.response?.data?.timestamp || new Date().toISOString(),
+          timestamp:
+            error.response?.data?.timestamp || new Date().toISOString(),
           path: error.response?.data?.path || error.config?.url || '',
           method: error.config?.method?.toUpperCase() || 'UNKNOWN',
         };
@@ -103,27 +152,45 @@ class ApiService {
   }
 
   // Generic HTTP methods
-  async get<T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  async get<T>(
+    url: string,
+    config?: AxiosRequestConfig
+  ): Promise<ApiResponse<T>> {
     const response = await this.api.get(url, config);
     return response.data;
   }
 
-  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  async post<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<ApiResponse<T>> {
     const response = await this.api.post(url, data, config);
     return response.data;
   }
 
-  async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  async put<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<ApiResponse<T>> {
     const response = await this.api.put(url, data, config);
     return response.data;
   }
 
-  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  async patch<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<ApiResponse<T>> {
     const response = await this.api.patch(url, data, config);
     return response.data;
   }
 
-  async delete<T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  async delete<T>(
+    url: string,
+    config?: AxiosRequestConfig
+  ): Promise<ApiResponse<T>> {
     const response = await this.api.delete(url, config);
     return response.data;
   }

@@ -5,40 +5,42 @@ export const authService = {
   // Sign up
   async signup(data: SignupRequest): Promise<AuthResponse> {
     const response = await apiService.post<AuthResponse>('/auth/signup', data);
-    
+
     // Set access token after successful signup (refresh token is set by server via cookie)
     if (response.success && response.data.accessToken) {
       apiService.setAuthToken(response.data.accessToken);
     }
-    
+
     return response.data;
   },
 
   // Sign in
   async signin(data: LoginRequest): Promise<AuthResponse> {
     const response = await apiService.post<AuthResponse>('/auth/signin', data);
-    
+
     // Set access token after successful signin (refresh token is set by server via cookie)
     if (response.success && response.data.accessToken) {
       apiService.setAuthToken(response.data.accessToken);
     }
-    
+
     return response.data;
   },
 
   // Refresh token (refresh token is sent via cookie)
   async refreshToken(): Promise<{ accessToken: string }> {
-    const response = await apiService.post<{ accessToken: string }>('/auth/refresh');
+    const response = await apiService.post<{ accessToken: string }>(
+      '/auth/refresh'
+    );
     return response.data;
   },
 
   // Logout
   async logout(): Promise<{ message: string }> {
     const response = await apiService.post<{ message: string }>('/auth/logout');
-    
+
     // Clear tokens after logout
     apiService.clearAuth();
-    
+
     return response.data;
   },
 
@@ -58,38 +60,41 @@ export const authService = {
   // Restore authentication state from stored access token and cookie
   async restoreAuthState(): Promise<{ isAuthenticated: boolean; user?: any }> {
     const accessToken = this.getStoredAccessToken();
-    
-    if (!accessToken) {
-      return { isAuthenticated: false };
-    }
 
-    try {
-      // Set access token in API service
-      apiService.setAuthToken(accessToken);
-      
-      // Try to fetch user profile to validate token
-      const response = await apiService.get('/users/profile');
-      return {
-        isAuthenticated: true,
-        user: response.data,
-      };
-    } catch (error) {
-      // Token is invalid, try to refresh using cookie
+    if (!accessToken) {
+      // No access token, try to refresh using cookie (user might have refresh token only)
       try {
         const refreshResponse = await this.refreshToken();
         apiService.setAuthToken(refreshResponse.accessToken);
-        
-        // Try to fetch user profile again
+
+        // Try to fetch user profile with new token
         const response = await apiService.get('/users/profile');
         return {
           isAuthenticated: true,
           user: response.data,
         };
-      } catch (refreshError) {
-        // Both access token and refresh failed, clear auth
-        this.clearAuth();
+      } catch {
+        // No valid tokens available
         return { isAuthenticated: false };
       }
+    }
+
+    try {
+      // Set access token in API service
+      apiService.setAuthToken(accessToken);
+
+      // Try to fetch user profile to validate token
+      // Note: If token is expired, the API interceptor will automatically
+      // try to refresh using the cookie and retry the request
+      const response = await apiService.get('/users/profile');
+      return {
+        isAuthenticated: true,
+        user: response.data,
+      };
+    } catch {
+      // Token refresh failed (handled by interceptor), clear auth state
+      this.clearAuth();
+      return { isAuthenticated: false };
     }
   },
 
